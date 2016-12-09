@@ -8,6 +8,14 @@ var __extends = (this && this.__extends) || function (d, b) {
 var React = require("react");
 var react_dom_1 = require("react-dom");
 var react_router_1 = require("react-router");
+var state = {
+    players: [{
+            id: 0,
+            x: 40,
+            y: 40,
+            color: 'red',
+        }]
+};
 var About = function (props) { return (React.createElement("div", null,
     React.createElement("h1", null, "Ludum Dare 37"),
     React.createElement("p", null, "Hello and welcome to my Ludum Dare 37 entry."))); };
@@ -65,6 +73,37 @@ react_dom_1.render((React.createElement(react_router_1.Router, { history: react_
         React.createElement(react_router_1.Route, { path: "about", component: About }),
         React.createElement(react_router_1.Route, { path: "join", component: Join })),
     React.createElement(react_router_1.Route, { path: "*", component: Route404 }))), document.getElementById('ui'));
+var canvas = document.getElementById('canvas');
+var _ctx = canvas.getContext('2d');
+var ctx;
+if (_ctx !== null) {
+    ctx = _ctx;
+}
+else {
+    throw new Error('Couldn\'t initialize context');
+}
+var draw = function (state, ctx) {
+    for (var _i = 0, _a = state.players; _i < _a.length; _i++) {
+        var player = _a[_i];
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x - 20, player.y - 20, 40, 40);
+    }
+};
+var main = function () {
+    window.requestAnimationFrame(main);
+    ctx.fillStyle = 'white';
+    state.players[0].x += 1;
+    state.players[0].y += 1;
+    ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+    draw(state, ctx);
+};
+main();
+var resize = function () {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+};
+resize();
+window.onresize = resize;
 
 },{"react":231,"react-dom":47,"react-router":200}],2:[function(require,module,exports){
 (function (process){

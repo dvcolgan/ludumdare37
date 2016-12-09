@@ -1,0 +1,18 @@
+Get server set up
+    Sockjs
+    Pick an http server
+
+Get food:
+    Eggs
+    Milk
+    Cashews
+    Cucumbers
+    Frozen Zeppelinis
+    Frozen veggies + feta
+    Celery
+    Tea
+    Heavy cream
+    Sour cream
+    Feta cheese
+    Oregano
+    Olive oil

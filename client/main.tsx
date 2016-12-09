@@ -8,6 +8,28 @@ import * as React from 'react';
 import { render } from 'react-dom';
 import { Router, Route, Link, browserHistory } from 'react-router'
 
+interface Player {
+    id: number;
+    x: number;
+    y: number;
+    color: string;
+}
+
+interface State {
+    players: Player[];
+}
+
+let state: State = {
+    players: [{
+        id: 0,
+        x: 40,
+        y: 40,
+        color: 'red',
+    }]
+};
+
+
+
 const About = (props: any) => (
     <div>
         <h1>Ludum Dare 37</h1>
@@ -79,3 +101,40 @@ render((
         <Route path="*" component={Route404}/>
     </Router>
 ), document.getElementById('ui'))
+
+let canvas = document.getElementById('canvas') as HTMLCanvasElement;
+let _ctx: CanvasRenderingContext2D | null = canvas.getContext('2d');
+let ctx: CanvasRenderingContext2D;
+if (_ctx !== null) {
+    ctx = _ctx;
+}
+else {
+    throw new Error('Couldn\'t initialize context');
+}
+
+
+const draw = (state: State, ctx: CanvasRenderingContext2D) => {
+    for (let player of state.players) {
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x - 20, player.y - 20, 40, 40);
+    }
+};
+
+
+
+let main = () => {
+    window.requestAnimationFrame(main);
+    ctx.fillStyle = 'white';
+    state.players[0].x += 1;
+    state.players[0].y += 1;
+    ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+    draw(state, ctx);
+};
+main();
+
+const resize = () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+};
+resize();
+window.onresize = resize;
