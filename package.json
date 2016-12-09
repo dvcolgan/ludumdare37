@@ -1,0 +1,26 @@
+{
+  "name": "ludumdare37",
+  "version": "0.0.1",
+  "description": "The official entry of DVColgan for Ludum Dare 37",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run watch-client & npm run watch-server",
+    "watch-client": "watchify client/main.tsx -p tsify -o client/assets/bundle.js",
+    "watch-server": "nodemon --watch 'server/**/*.ts' --exec 'ts-node' server/main.ts",
+    "test": "ts-node server/tests.ts | faucet"
+  },
+  "author": "David Colgan",
+  "license": "MIT",
+  "dependencies": {
+    "@types/react": "^0.14.54",
+    "@types/react-dom": "^0.14.19",
+    "@types/react-router": "^2.0.41",
+    "browserify": "^13.1.1",
+    "react": "^15.4.1",
+    "react-dom": "^15.4.1",
+    "react-router": "^3.0.0",
+    "tsify": "^2.0.3",
+    "typescript": "^2.1.4",
+    "watchify": "^3.7.0"
+  }
+}
