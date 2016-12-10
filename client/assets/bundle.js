@@ -14,6 +14,19 @@ var io = require("socket.io-client");
 var types_1 = require("../shared/types");
 var socket = io.connect();
 var myUuid;
+var camera = {
+    x: 0,
+    y: 0,
+};
+var dragging = {
+    cameraStart: { x: 0, y: 0 },
+    mouseStart: { x: 0, y: 0 },
+};
+var mouse = {
+    x: 0,
+    y: 0,
+    pressed: false,
+};
 var state = {
     players: {},
 };
@@ -23,9 +36,26 @@ socket.on('connect', function () {
         myUuid = uuid.v4();
         localStorage.setItem('uuid', myUuid);
     }
-    socket.emit('join', myUuid);
+    var payload = {
+        id: myUuid,
+        color: '#' + Math.random().toString(16).substr(-6),
+    };
+    try {
+        var lastCamera = localStorage.getItem('camera');
+        if (lastCamera) {
+            var parsed = JSON.parse(lastCamera);
+            camera.x = parsed.x || 0;
+            camera.y = parsed.y || 0;
+        }
+    }
+    catch (exception) {
+        camera.x = 0;
+        camera.y = 0;
+    }
+    socket.emit('join', payload);
 });
-socket.on('update', function (state) {
+socket.on('update', function (update) {
+    state.players = update.players;
 });
 var About = function (props) { return (React.createElement("div", null,
     React.createElement("h1", null, "Ludum Dare 37"),
@@ -99,17 +129,49 @@ if (_ctx !== null) {
 else {
     throw new Error('Couldn\'t initialize context');
 }
+function shadeColor(color, percent) {
+    var f = parseInt(color.slice(1), 16), t = percent < 0 ? 0 : 255, p = percent < 0 ? percent * -1 : percent, R = f >> 16, G = f >> 8 & 0x00FF, B = f & 0x0000FF;
+    return "#" + (0x1000000 + (Math.round((t - R) * p) + R) * 0x10000 + (Math.round((t - G) * p) + G) * 0x100 + (Math.round((t - B) * p) + B)).toString(16).slice(1);
+}
 var draw = function (state, ctx) {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
     functions_1.forEachObj(state.players, function (player) {
         ctx.fillStyle = player.color;
+        ctx.strokeStyle = shadeColor(player.color, -0.3);
+        ctx.lineWidth = 2;
         for (var _i = 0, _a = player.units; _i < _a.length; _i++) {
             var unit = _a[_i];
-            ctx.fillRect(unit.x - types_1.G.UNIT_RADIUS, unit.y - types_1.G.UNIT_RADIUS, types_1.G.UNIT_RADIUS * 2, types_1.G.UNIT_RADIUS * 2);
+            ctx.beginPath();
+            ctx.arc(unit.x - camera.x, unit.y - camera.y, types_1.G.UNIT_RADIUS, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
         }
     });
 };
+window.addEventListener('mousedown', function (e) {
+    if (e.button === 0) {
+        mouse.pressed = true;
+        dragging.cameraStart.x = camera.x;
+        dragging.cameraStart.y = camera.y;
+        dragging.mouseStart.x = mouse.x;
+        dragging.mouseStart.y = mouse.y;
+    }
+});
+window.addEventListener('mouseup', function (e) {
+    if (e.button === 0) {
+        mouse.pressed = false;
+    }
+});
+window.addEventListener('mousemove', function (e) {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    if (mouse.pressed) {
+        camera.x = dragging.mouseStart.x - (mouse.x - dragging.cameraStart.x);
+        camera.y = dragging.mouseStart.y - (mouse.y - dragging.cameraStart.y);
+        localStorage.setItem('camera', JSON.stringify(camera));
+    }
+});
 var main = function () {
     window.requestAnimationFrame(main);
     draw(state, ctx);

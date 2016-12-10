@@ -32,3 +32,8 @@ export interface Player {
 export interface State {
     players: {[id: string]: Player};
 }
+
+export interface JoinPayload {
+    id: string;
+    color: string;
+}

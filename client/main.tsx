@@ -4,11 +4,36 @@ import * as React from 'react';
 import { render } from 'react-dom';
 import { Router, Route, Link, browserHistory } from 'react-router'
 import * as io from 'socket.io-client';
-import { G, Vector2, Flag, Unit, Player, State } from '../shared/types';
+import {
+    G, Vector2, Flag, Unit, Player, State,
+    JoinPayload,
+} from '../shared/types';
 
 const socket: SocketIOClient.Socket = io.connect();
 
 let myUuid;
+interface Camera extends Vector2 {
+}
+interface Mouse extends Vector2 {
+    pressed: boolean;
+}
+interface Dragging {
+    cameraStart: Vector2;
+    mouseStart: Vector2;
+}
+let camera: Camera = {
+    x: 0,
+    y: 0,
+};
+let dragging: Dragging = {
+    cameraStart: {x: 0, y: 0},
+    mouseStart: {x: 0, y: 0},
+};
+let mouse: Mouse = {
+    x: 0,
+    y: 0,
+    pressed: false,
+};
 let state: State = {
     players: {},
 };
@@ -19,14 +44,28 @@ socket.on('connect', () => {
         myUuid = uuid.v4();
         localStorage.setItem('uuid', myUuid);
     }
-    socket.emit('join', myUuid);
-
+    let payload: JoinPayload = {
+        id: myUuid,
+        color: '#' + Math.random().toString(16).substr(-6),
+    };
+    try {
+        let lastCamera = localStorage.getItem('camera');
+        if (lastCamera) {
+            let parsed: any = JSON.parse(lastCamera);
+            camera.x = parsed.x || 0;
+            camera.y = parsed.y || 0;
+        }
+    }
+    catch (exception) {
+        camera.x = 0;
+        camera.y = 0;
+    }
+    socket.emit('join', payload);
 });
 
-socket.on('update', (state: State) => {
-    
+socket.on('update', (update: State) => {
+    state.players = update.players;
 });
-
 
 const About = (props: any) => (
     <div>
@@ -118,23 +157,55 @@ else {
     throw new Error('Couldn\'t initialize context');
 }
 
+function shadeColor(color: string, percent: number) {   
+    var f=parseInt(color.slice(1),16),t=percent<0?0:255,p=percent<0?percent*-1:percent,R=f>>16,G=f>>8&0x00FF,B=f&0x0000FF;
+    return "#"+(0x1000000+(Math.round((t-R)*p)+R)*0x10000+(Math.round((t-G)*p)+G)*0x100+(Math.round((t-B)*p)+B)).toString(16).slice(1);
+}
 
 const draw = (state: State, ctx: CanvasRenderingContext2D) => {
     ctx.fillStyle = 'white';
     ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
     forEachObj(state.players, (player: Player) => {
         ctx.fillStyle = player.color;
+        ctx.strokeStyle = shadeColor(player.color, -0.3);
+        ctx.lineWidth = 2;
         for (let unit of player.units) {
-            ctx.fillRect(
-                unit.x - G.UNIT_RADIUS,
-                unit.y - G.UNIT_RADIUS,
-                G.UNIT_RADIUS * 2,
-                G.UNIT_RADIUS * 2,
+            ctx.beginPath();
+            ctx.arc(
+                unit.x - camera.x,
+                unit.y - camera.y,
+                G.UNIT_RADIUS,
+                0, Math.PI * 2,
             );
+            ctx.fill();
+            ctx.stroke();
         }
     });
 };
 
+window.addEventListener('mousedown', (e: MouseEvent) => {
+    if (e.button === 0) {
+        mouse.pressed = true;
+        dragging.cameraStart.x = camera.x;
+        dragging.cameraStart.y = camera.y;
+        dragging.mouseStart.x = mouse.x;
+        dragging.mouseStart.y = mouse.y;
+    }
+});
+window.addEventListener('mouseup', (e: MouseEvent) => {
+    if (e.button === 0) {
+        mouse.pressed = false;
+    }
+});
+window.addEventListener('mousemove', (e: MouseEvent) => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+    if (mouse.pressed) {
+        camera.x = dragging.mouseStart.x - (mouse.x - dragging.cameraStart.x)
+        camera.y = dragging.mouseStart.y - (mouse.y - dragging.cameraStart.y)
+        localStorage.setItem('camera', JSON.stringify(camera));
+    }
+});
 
 
 let main = () => {

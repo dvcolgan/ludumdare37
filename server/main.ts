@@ -1,6 +1,9 @@
 import * as _io from 'socket.io';
 import { forEachObj } from '../shared/functions';
-import { G, Vector2, Flag, Unit, Player, State } from '../shared/types';
+import {
+    G, Vector2, Flag, Unit, Player, State,
+    JoinPayload,
+} from '../shared/types';
 
 const distanceBetween = (v1: Vector2, v2: Vector2): number => (
     Math.sqrt(
@@ -89,7 +92,6 @@ const shapedLike = (obj: any, spec: any) => {
     //for (let key in spec) {
     //    let type = spec[key];
     //    let value = obj[key];
-
     //}
     //return true;
 };
@@ -99,33 +101,35 @@ io.on('connect', (socket: SocketIO.Socket) => {
     socket.on('disconnect', () => {
         delete socketIdToPlayerId[socket.id];
     });
-    socket.on('join', (payload: {id: string, color: string}) => {
+    socket.on('join', (payload: JoinPayload) => {
         console.log('join', payload);
         if (shapedLike(payload, {id: 'string', color: 'string'})) {
             // TODO if id is null or empty string, this could be a problem
             let player: Player;
             if (state.players[payload.id]) {
                 console.log('found existing player');
-                player = state.players[socketIdToPlayerId[socket.id]]
+                player = state.players[payload.id];
             }
             else {
                 console.log('creating new player');
                 player = { id: payload.id, color: payload.color, units: [], flags: [] };
                 state.players[player.id] = player;
-            }
 
+                // Create new units
+                for (let i = 0; i < 10; i++) {
+                    let x = Math.random() * G.STARTING_RADIUS * 2 - G.STARTING_RADIUS;
+                    let y = Math.random() * G.STARTING_RADIUS * 2 - G.STARTING_RADIUS;
+                    player.units.push({
+                        x: x + Math.random() * 20 - 10,
+                        y: y + Math.random() * 20 - 10,
+                        angle: 0,
+                        hp: 100,
+                    });
+                }
+            }
+            console.log(socket.id, player);
             socketIdToPlayerId[socket.id] = player.id;
-
-            for (let i = 0; i < 10; i++) {
-                let x = Math.random() * G.STARTING_RADIUS * 2 - G.STARTING_RADIUS;
-                let y = Math.random() * G.STARTING_RADIUS * 2 - G.STARTING_RADIUS;
-                player.units.push({
-                    x: x * Math.random() * 20 - 10,
-                    y: y * Math.random() * 20 - 10,
-                    angle: 0,
-                    hp: 100,
-                });
-            }
+            socket.emit('update', state);
         }
     });
     socket.on('placeFlag', (flag: {id: string, x: number, y: number}) => {
