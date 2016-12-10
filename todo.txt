@@ -1,18 +1,35 @@
-Get server set up
-    Sockjs
-    Pick an http server
 
-Get food:
-    Eggs
-    Milk
-    Cashews
-    Cucumbers
-    Frozen Zeppelinis
-    Frozen veggies + feta
-    Celery
-    Tea
-    Heavy cream
-    Sour cream
-    Feta cheese
-    Oregano
-    Olive oil
+One Room
+Similar in feel to agar.io - a bunch of players in a single room with a white background
+Jump in and play for a while, then leave
+
+You can place as many flags as you want at any time
+Units are single points with a radius of your color with an arrow showing which direction it faces (make it a triangle)
+"Rounds" last 5-10 seconds
+After a round, the system takes each of your units, determines which cursor it is closest to and orients the unit towards that flag
+The unit then moves a fixed amount of distance towards that flag
+If there are any other players units overlapping any of your units, whichever has a better angle of attack wins
+
+UI is just mouse clicks
+Graphics could just be canvas and maybe webgl if i have time
+
+User can click on a place in the map to place a flag of their color
+User can click on a flag to remove it
+
+If there is time, add simple terrain
+
+Unts overlap with other players, but don't overlap with each other
+
+
+x1*x2+y1*y2
+Dot product between the attack vector and the vector between the centers
+
+attack vector = unit.angle
+
+unit1
+unit2
+
+todo:
+implement shapedLike
+send error messages if the player cheats
+leaderboard

@@ -1,33 +1,31 @@
-/*
- * Simple site that has a home page, a join page, and an about page using react-router for routing
- * The whole app floats on top of a full screen canvas
- * 
- */
-
+import { forEachObj } from '../shared/functions';
+import * as uuid from 'node-uuid';
 import * as React from 'react';
 import { render } from 'react-dom';
 import { Router, Route, Link, browserHistory } from 'react-router'
+import * as io from 'socket.io-client';
+import { G, Vector2, Flag, Unit, Player, State } from '../shared/types';
 
-interface Player {
-    id: number;
-    x: number;
-    y: number;
-    color: string;
-}
+const socket: SocketIOClient.Socket = io.connect();
 
-interface State {
-    players: Player[];
-}
-
+let myUuid;
 let state: State = {
-    players: [{
-        id: 0,
-        x: 40,
-        y: 40,
-        color: 'red',
-    }]
+    players: {},
 };
 
+socket.on('connect', () => {
+    myUuid = localStorage.getItem('uuid');
+    if (!myUuid) {
+        myUuid = uuid.v4();
+        localStorage.setItem('uuid', myUuid);
+    }
+    socket.emit('join', myUuid);
+
+});
+
+socket.on('update', (state: State) => {
+    
+});
 
 
 const About = (props: any) => (
@@ -81,6 +79,14 @@ const Navbar = (props: {username?: string}) => (
     </nav>
 );
 
+const Chatbar = (props: any) => (
+    <div>
+        {props.messages.map((message: any) =>
+            <p><span>{message.player.username}</span>: {message.body}</p>
+        )}
+    </div>
+);
+
 class App extends React.Component<any, any> {
     render() {
         return (
@@ -114,20 +120,25 @@ else {
 
 
 const draw = (state: State, ctx: CanvasRenderingContext2D) => {
-    for (let player of state.players) {
+    ctx.fillStyle = 'white';
+    ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+    forEachObj(state.players, (player: Player) => {
         ctx.fillStyle = player.color;
-        ctx.fillRect(player.x - 20, player.y - 20, 40, 40);
-    }
+        for (let unit of player.units) {
+            ctx.fillRect(
+                unit.x - G.UNIT_RADIUS,
+                unit.y - G.UNIT_RADIUS,
+                G.UNIT_RADIUS * 2,
+                G.UNIT_RADIUS * 2,
+            );
+        }
+    });
 };
 
 
 
 let main = () => {
     window.requestAnimationFrame(main);
-    ctx.fillStyle = 'white';
-    state.players[0].x += 1;
-    state.players[0].y += 1;
-    ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
     draw(state, ctx);
 };
 main();

@@ -13,7 +13,8 @@
         ]
     },
     "files": [
-        "client/main.tsx"
+        "client/main.tsx",
+        "server/main.ts"
     ],
     "exclude": [
         "node_modules"
